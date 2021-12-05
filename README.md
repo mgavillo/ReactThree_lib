@@ -1,4 +1,3 @@
-This is a lib of all cool stuff you can do with react three fiber.
-type yarn run start to see
+React Three Fiber - Postprocess outline
 
-yarn run outline
+run yarn run start to see it
