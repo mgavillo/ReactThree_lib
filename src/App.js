@@ -1,7 +1,7 @@
 import './App.css';
-import React, {useRef, useMemo, Suspense} from "react";
+import React, {useRef, useMemo, Suspense, useEffect} from "react";
 import { Canvas, useFrame, useThree, extend } from "@react-three/fiber";
-import { Html } from "@react-three/drei"
+import { Html, useGLTF, useAnimations } from "@react-three/drei"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as THREE from 'three'
 
@@ -14,27 +14,42 @@ const CameraControls = () => {  // Get a reference to the Three.js Camera, and t
     return <orbitControls ref={controls} args={[camera, domElement]} />;
 };
 
-const Skybox = () => {
-    const { scene } = useThree();
-    const loader = new THREE.CubeTextureLoader();
-    const texture = loader.load(["/DallasW/posx.jpg", "/DallasW/negx.jpg", "/DallasW/posy.jpg", "/DallasW/negy.jpg", "/DallasW/posz.jpg","/DallasW/negz.jpg",  ]);
-    scene.background = texture;
-    return(null);
+
+function getMethods(obj)
+{
+    var res = [];
+    for(var m in obj) {
+        res.push(m)
+    }
+    return res;
 }
 
-const Sphere = () => {
-    const { scene, gl } = useThree();
-    
-    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter,});
-    const cubeCamera = new THREE.CubeCamera(1, 1000, cubeRenderTarget);
-    cubeCamera.position.set(0, 100, 0);
-    scene.add(cubeCamera);  // Update the cubeCamera with current renderer and scene.
-    useFrame(() => cubeCamera.update(gl, scene));
+const Model = () => {
+    const index= 0;
+    const { nodes, animations } = useGLTF("/gltf/Wolf-Blender-2.82a.glb")
+    // const texture = useTexture("/gltf.jpg")
+    const { ref, actions, names } = useAnimations(animations)
+  // Change animation when the index changes
+    useEffect(() => {
+    // Reset and fade in animation after an index has been changed
+    actions[names[index]].reset().fadeIn(0.5).play()
+    // In the clean-up phase, fade it out
+    return () => actions[names[index]].fadeOut(0.5)
+  }, [index, actions, names])
+    console.log(getMethods(nodes))
     return(
-        <mesh position={[0, 100, 0]}>
-            <sphereBufferGeometry args={[350, 50, 50]} attach="geometry" />
-            <meshBasicMaterial color={0xfff1ef} envMap={cubeCamera.renderTarget.texture} attach="material" />
-        </mesh>
+        <group rotation={[Math.PI / 2, 0, 0]} scale={0.01}>
+        <primitive object={nodes.mixamorigHips} />
+        <skinnedMesh
+          castShadow
+          receiveShadow
+          geometry={nodes.Armature_0.geometry}
+          skeleton={nodes.Armature_0.skeleton}
+          rotation={[-Math.PI / 2, 0, 0]}
+          scale={100}>
+          <meshStandardMaterial map-flipY={false} skinning />
+        </skinnedMesh>
+      </group>
     );
 }
 
@@ -44,9 +59,8 @@ export default function App (){
         style={{ width: window.innerWidth, height: window.innerHeight}}>
             <CameraControls />
             <Suspense fallback={<Html>"loading...."</Html>}> */
-                <Skybox/>
+                <Model />
             </Suspense>
-            <Sphere />
         </Canvas>
     );
 };
