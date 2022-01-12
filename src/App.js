@@ -1,9 +1,10 @@
 import './App.css';
 import React, {useRef, useMemo, Suspense} from "react";
-import { Canvas, useFrame, useThree, extend } from "@react-three/fiber";
-import { Html } from "@react-three/drei"
+import { Canvas, useFrame, useThree, extend, useLoader } from "@react-three/fiber";
+import { Html, useFBX, useProgress, Environment} from "@react-three/drei"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as THREE from 'three'
+import { FBXLoader } from 'three-stdlib';
 
 extend({ OrbitControls});
 
@@ -14,39 +15,33 @@ const CameraControls = () => {  // Get a reference to the Three.js Camera, and t
     return <orbitControls ref={controls} args={[camera, domElement]} />;
 };
 
-const Skybox = () => {
-    const { scene } = useThree();
-    const loader = new THREE.CubeTextureLoader();
-    const texture = loader.load(["/DallasW/posx.jpg", "/DallasW/negx.jpg", "/DallasW/posy.jpg", "/DallasW/negy.jpg", "/DallasW/posz.jpg","/DallasW/negz.jpg",  ]);
-    scene.background = texture;
-    return(null);
-}
+function Loader() {
+    const { progress } = useProgress()
+    return <Html center>{progress} % loaded</Html>
+  }
 
-const Sphere = () => {
-    const { scene, gl } = useThree();
-    
-    const cubeRenderTarget = new THREE.WebGLCubeRenderTarget(256, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter,});
-    const cubeCamera = new THREE.CubeCamera(1, 1000, cubeRenderTarget);
-    cubeCamera.position.set(0, 100, 0);
-    scene.add(cubeCamera);  // Update the cubeCamera with current renderer and scene.
-    useFrame(() => cubeCamera.update(gl, scene));
+const Model = () => {
+    const fbx = useLoader(FBXLoader, 'Hoewa_Forsteriana_FBX/hoewa_Forsteriana.fbx')
+
     return(
-        <mesh position={[0, 100, 0]}>
-            <sphereBufferGeometry args={[350, 50, 50]} attach="geometry" />
-            <meshBasicMaterial color={0xfff1ef} envMap={cubeCamera.renderTarget.texture} attach="material" />
-        </mesh>
+        <primitive object={fbx} scale={0.005} />
     );
 }
 
 export default function App (){
+    // const model = useLoader(
+    //     GLTFLoader,
+    //     'hoewa_Forsteriana.fbx'
+    // )
+
     return(
         <Canvas shadows camera={{position:[0, 1, 10], fov:[55]}} 
         style={{ width: window.innerWidth, height: window.innerHeight}}>
             <CameraControls />
-            <Suspense fallback={<Html>"loading...."</Html>}> */
-                <Skybox/>
+            <Suspense fallback={<Loader/>}>
+                <Model/>
+                <Environment preset="sunset" background/>
             </Suspense>
-            <Sphere />
         </Canvas>
     );
 };
