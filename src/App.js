@@ -1,11 +1,86 @@
 import './App.css';
 import React, {useRef, useMemo, Suspense, useEffect} from "react";
 import { Canvas, useFrame, useThree, extend } from "@react-three/fiber";
-import { Html, useGLTF, useAnimations } from "@react-three/drei"
+import { Html, useGLTF, useAnimations, Environment, SpotLight} from "@react-three/drei"
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as THREE from 'three'
+import BenderFuturama from './BenderFuturama';
 
+import {RenderPass} from 'three/examples/jsm/postprocessing/RenderPass'
+import {ShaderPass} from 'three/examples/jsm/postprocessing/ShaderPass'
+import {EffectComposer} from 'three/examples/jsm/postprocessing/EffectComposer'
+import {UnrealBloomPass} from 'three/examples/jsm/postprocessing/UnrealBloomPass';
+import { ObjectSpaceNormalMap } from 'three';
 extend({ OrbitControls});
+var materials = {};
+const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
+const darkenNonBloomed = (obj) => {
+  // if(obj.metaData.active)
+    // console.log()
+    if (obj.isMesh && obj.name === "Sphere008_2"){
+      // console.log(obj.activeBloom === true)
+    }
+  if (!obj.isMesh || obj.activeBloom){
+    return
+  }
+
+  materials[obj.uuid] = obj.material
+  obj.material = darkMaterial
+  }
+  
+const restoreMaterial = (obj) => {
+        if (!materials[obj.uuid])
+            return
+        obj.material = materials[obj.uuid]
+        delete materials[obj.uuid]
+}
+
+function Effect() {
+  const { gl, scene, camera, size } = useThree()
+
+  const [bloom, final] = useMemo(() => {
+    const renderScene = new RenderPass(scene, camera)
+    const comp = new EffectComposer(gl)
+    comp.renderToScreen = false
+    comp.addPass(renderScene)
+    comp.addPass(new UnrealBloomPass(new THREE.Vector2(512, 512), 1.5, 1, 0))
+
+    const finalComposer = new EffectComposer(gl)
+    finalComposer.addPass(renderScene)
+    const material = new THREE.ShaderMaterial({
+      uniforms: { baseTexture: { value: null }, bloomTexture: { value: comp.renderTarget2.texture } },
+      vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
+      fragmentShader:
+        'uniform sampler2D baseTexture; uniform sampler2D bloomTexture; varying vec2 vUv; vec4 getTexture( sampler2D texelToLinearTexture ) { return mapTexelToLinear( texture2D( texelToLinearTexture , vUv ) ); } void main() { gl_FragColor = ( getTexture( baseTexture ) + vec4( 1.0 ) * getTexture( bloomTexture ) ); }'
+    })
+    material.map = true
+    const finalPass = new ShaderPass(material, 'baseTexture')
+    finalPass.needsSwap = true
+    finalComposer.addPass(finalPass)
+    return [comp, finalComposer]
+  }, [])
+
+  useEffect(() => {
+    bloom.setSize(size.width, size.height)
+    final.setSize(size.width, size.height)
+    console.log(bloom.renderTarget1)
+  }, [bloom, final, size])
+
+  useFrame(() => {
+    // https://github.com/mrdoob/three.js/blob/master/examples/webgl_postprocessing_unreal_bloom_selective.html
+    // this seems kinda dirty, it mutates the scene and overwrites materials
+    scene.traverse(darkenNonBloomed)
+    const tmp = scene.background;
+    scene.background = darkMaterial;
+    bloom.render()
+    scene.traverse(restoreMaterial)
+    scene.background = tmp;
+    // then writes the normal scene on top
+    final.render()
+  }, 1)
+  return null
+}
+
 
 const CameraControls = () => {  // Get a reference to the Three.js Camera, and the canvas html element.  // We need these to setup the OrbitControls component.  // https://threejs.org/docs/#examples/en/controls/OrbitControls
     const {    camera,    gl: { domElement },  } = useThree();
@@ -24,43 +99,31 @@ function getMethods(obj)
     return res;
 }
 
-const Model = () => {
-    const index= 0;
-    const { nodes, animations } = useGLTF("/gltf/Wolf-Blender-2.82a.glb")
-    // const texture = useTexture("/gltf.jpg")
-    const { ref, actions, names } = useAnimations(animations)
-  // Change animation when the index changes
-    useEffect(() => {
-    // Reset and fade in animation after an index has been changed
-    actions[names[index]].reset().fadeIn(0.5).play()
-    // In the clean-up phase, fade it out
-    return () => actions[names[index]].fadeOut(0.5)
-  }, [index, actions, names])
-    console.log(getMethods(nodes))
-    return(
-        <group rotation={[Math.PI / 2, 0, 0]} scale={0.01}>
-        <primitive object={nodes.mixamorigHips} />
-        <skinnedMesh
-          castShadow
-          receiveShadow
-          geometry={nodes.Armature_0.geometry}
-          skeleton={nodes.Armature_0.skeleton}
-          rotation={[-Math.PI / 2, 0, 0]}
-          scale={100}>
-          <meshStandardMaterial map-flipY={false} skinning />
-        </skinnedMesh>
-      </group>
-    );
-}
-
 export default function App (){
+
+  
     return(
         <Canvas shadows camera={{position:[0, 1, 10], fov:[55]}} 
         style={{ width: window.innerWidth, height: window.innerHeight}}>
             <CameraControls />
-            <Suspense fallback={<Html>"loading...."</Html>}> */
-                <Model />
+            <Suspense fallback={<Html>"loading...."</Html>}>
+                <BenderFuturama/>
             </Suspense>
+            {/* <Environment preset='city'/> */}
+            <SpotLight
+  distance={10}
+  angle={1}
+  attenuation={0}
+  anglePower={0} // Diffuse-cone anglePower (default: 5)
+/>
+{/* <pointLight/> */}
+<Suspense fallback={<Html>"loading...."</Html>}>
+
+      <Environment background={true} preset='sunset' />
+
+</Suspense>
+{/* <ambientLight/> */}
+  <Effect/>
         </Canvas>
     );
 };
