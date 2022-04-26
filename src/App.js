@@ -6,11 +6,12 @@
 /*   By: mgavillo <mgavillo@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/02/06 01:20:58 by mgavillo          #+#    #+#             */
-/*   Updated: 2022/04/15 14:54:23 by mgavillo         ###   ########.fr       */
+/*   Updated: 2022/04/15 18:49:28 by mgavillo         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import { Line } from '@react-three/drei';
 import * as THREE from 'three'
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import BloomEffect from "./BloomEffect"
@@ -206,14 +207,13 @@ const Cube = (props) => {
   const edges = new THREE.EdgesGeometry(new THREE.BoxGeometry(4, 4, 4), 15);
   // scene.add(line);
 
-  // const edgeGeom = new THREE.EdgesGeometry(geom, threshold)
   return (
-    <mesh position={props.position} ref={ref} userData={{ active }}>
+    <mesh position={props.position} ref={ref} >
       <boxBufferGeometry attach="geometry" args={[4, 4, 4]} />
-      <meshBasicMaterial attach="material" color={props.color} opacity={props.edges ? 0.1 : 1} transparent/>
-      {props.edges && <lineSegments raycast={() => null} geometry={edges}>
-        <lineBasicMaterial color={"#FFFFFF"} />
-      </lineSegments> }
+      <meshBasicMaterial attach="material" color={props.color} opacity={props.edges ? 0 : 1} transparent />
+      {props.edges && <lineSegments raycast={() => null} geometry={edges} userData={{ active }}>
+        <lineBasicMaterial color={"#FFFFFF"} linewidth={10} linejoin="round" linecap="round" attach='material' />
+      </lineSegments>}
     </mesh>
   )
 }
@@ -240,7 +240,7 @@ const GameCubes = (props) => {
               if (index % 3 === 2)
                 color = "#0000FF"
               let position = arrayToWorld([zIndex, cIndex, index])
-              return <Cube position={position} color={color} edges={0}/>
+              return <Cube position={position} color={color} edges={0} />
             }
           })
         })
@@ -264,14 +264,14 @@ const Square = (props) => {
   return (
     <group ref={pivotRef}>
       <group >
-        {piece[0][0] && <Cube position={[0, 0, 0]} color={"#0000FF"} edges={true}/>}
-        {piece[0][1] && <Cube position={[0, -4, 0]} color={"#FFFF00"}edges={true} />}
-        {piece[0][2] && <Cube position={[0, -8, 0]} color={"#FF0000"} edges={true}/>}
-        {piece[0][3] && <Cube position={[0, -12, 0]} color={"#FF00FF"} edges={true}/>}
-        {piece[1][0] && <Cube position={[4, 0, 0]} color={"#FF00FF"} edges={true}/>}
-        {piece[1][1] && <Cube position={[4, -4, 0]} color={"#FF00FF"} edges={true}/>}
-        {piece[1][2] && <Cube position={[4, -8, 0]} color={"#FF00FF"} edges={true}/>}
-        {piece[1][3] && <Cube position={[4, -12, 0]} color={"#FF00FF"} edges={true}/>}
+        {piece[0][0] && <Cube position={[0, 0, 0]} color={"#0000FF"} edges={true} />}
+        {piece[0][1] && <Cube position={[0, -4, 0]} color={"#FFFF00"} edges={true} />}
+        {piece[0][2] && <Cube position={[0, -8, 0]} color={"#FF0000"} edges={true} />}
+        {piece[0][3] && <Cube position={[0, -12, 0]} color={"#FF00FF"} edges={true} />}
+        {piece[1][0] && <Cube position={[4, 0, 0]} color={"#FF00FF"} edges={true} />}
+        {piece[1][1] && <Cube position={[4, -4, 0]} color={"#FF00FF"} edges={true} />}
+        {piece[1][2] && <Cube position={[4, -8, 0]} color={"#FF00FF"} edges={true} />}
+        {piece[1][3] && <Cube position={[4, -12, 0]} color={"#FF00FF"} edges={true} />}
         <meshBasicMaterial attach="material" color={"#FFFFFF"} />
       </group>
     </group>
@@ -327,17 +327,17 @@ const Square = (props) => {
 // }
 
 
-const Line = (props) => {
-  const ref = useRef(null);
-  const onUpdate = useCallback(self => self.setFromPoints(props.points), [props.points])
-  return (
-    <line position={[0, 0, -10]} ref={ref}>
-      <bufferGeometry attach="geometry" onUpdate={onUpdate} />
-      <lineBasicMaterial attach="material" color={props.color} linewidth={10} linecap={'round'} linejoin={'round'} />
-    </line>
+// const Line = (props) => {
+//   const ref = useRef(null);
+//   const onUpdate = useCallback(self => self.setFromPoints(props.points), [props.points])
+//   return (
+//     <line position={[0, 0, -10]} ref={ref}>
+//       <bufferGeometry attach="geometry" onUpdate={onUpdate} />
+//       <lineBasicMaterial attach="material" color={props.color} linewidth={50} linecap={'round'} linejoin={'round'} />
+//     </line>
 
-  )
-}
+//   )
+// }
 
 export default function App() {
   const [boxLines, setBoxLines] = useState(null);
@@ -361,47 +361,47 @@ export default function App() {
     linesCreate.push([new THREE.Vector3(-10, -10, -16), new THREE.Vector3(10, -10, -16), new THREE.Vector3(10, 10, -16), new THREE.Vector3(-10, 10, -16), new THREE.Vector3(-10, -10, -16)])
     linesCreate.push([new THREE.Vector3(-10, -10, -20), new THREE.Vector3(10, -10, -20), new THREE.Vector3(10, 10, -20), new THREE.Vector3(-10, 10, -20), new THREE.Vector3(-10, -10, -20)])
     linesCreate.push([new THREE.Vector3(-10, -10, -24), new THREE.Vector3(10, -10, -24), new THREE.Vector3(10, 10, -24), new THREE.Vector3(-10, 10, -24), new THREE.Vector3(-10, -10, -24)])
-    linesCreate.push([new THREE.Vector3(-10, -10, -28), new THREE.Vector3(10, -10, -28), new THREE.Vector3(10, 10, -28), new THREE.Vector3(-10, 10, -28), new THREE.Vector3(-10, -10, -28)])
-    linesCreate.push([new THREE.Vector3(-10, -10, -32), new THREE.Vector3(10, -10, -32), new THREE.Vector3(10, 10, -32), new THREE.Vector3(-10, 10, -32), new THREE.Vector3(-10, -10, -32)])
-    linesCreate.push([new THREE.Vector3(-10, -10, -36), new THREE.Vector3(10, -10, -36), new THREE.Vector3(10, 10, -36), new THREE.Vector3(-10, 10, -36), new THREE.Vector3(-10, -10, -36)])
     linesCreate.push([new THREE.Vector3(-10, -10, -40), new THREE.Vector3(10, -10, -40), new THREE.Vector3(10, 10, -40), new THREE.Vector3(-10, 10, -40), new THREE.Vector3(-10, -10, -40)])
+    linesCreate.push([new THREE.Vector3(-10, -10, -44), new THREE.Vector3(10, -10, -44), new THREE.Vector3(10, 10, -44), new THREE.Vector3(-10, 10, -44), new THREE.Vector3(-10, -10, -44)])
+    linesCreate.push([new THREE.Vector3(-10, -10, -48), new THREE.Vector3(10, -10, -48), new THREE.Vector3(10, 10, -48), new THREE.Vector3(-10, 10, -48), new THREE.Vector3(-10, -10, -48)])
+    linesCreate.push([new THREE.Vector3(-10, -10, -52), new THREE.Vector3(10, -10, -52), new THREE.Vector3(10, 10, -52), new THREE.Vector3(-10, 10, -52), new THREE.Vector3(-10, -10, -52)])
 
 
-    linesCreate.push([new THREE.Vector3(-10, -10, 0), new THREE.Vector3(-10, -10, -40)])
-    linesCreate.push([new THREE.Vector3(10, -10, 0), new THREE.Vector3(10, -10, -40)])
-    linesCreate.push([new THREE.Vector3(10, 10, 0), new THREE.Vector3(10, 10, -40)])
-    linesCreate.push([new THREE.Vector3(-10, 10, 0), new THREE.Vector3(-10, 10, -40)])
+    linesCreate.push([new THREE.Vector3(-10, -10, 0), new THREE.Vector3(-10, -10, -52)])
+    linesCreate.push([new THREE.Vector3(10, -10, 0), new THREE.Vector3(10, -10, -52)])
+    linesCreate.push([new THREE.Vector3(10, 10, 0), new THREE.Vector3(10, 10, -52)])
+    linesCreate.push([new THREE.Vector3(-10, 10, 0), new THREE.Vector3(-10, 10, -52)])
 
-    linesCreate.push([new THREE.Vector3(-6, -10, 0), new THREE.Vector3(-6, -10, -40)])
-    linesCreate.push([new THREE.Vector3(6, -10, 0), new THREE.Vector3(6, -10, -40)])
-    linesCreate.push([new THREE.Vector3(6, 10, 0), new THREE.Vector3(6, 10, -40)])
-    linesCreate.push([new THREE.Vector3(-6, 10, 0), new THREE.Vector3(-6, 10, -40)])
+    linesCreate.push([new THREE.Vector3(-6, -10, 0), new THREE.Vector3(-6, -10, -52)])
+    linesCreate.push([new THREE.Vector3(6, -10, 0), new THREE.Vector3(6, -10, -52)])
+    linesCreate.push([new THREE.Vector3(6, 10, 0), new THREE.Vector3(6, 10, -52)])
+    linesCreate.push([new THREE.Vector3(-6, 10, 0), new THREE.Vector3(-6, 10, -52)])
 
-    linesCreate.push([new THREE.Vector3(-2, -10, 0), new THREE.Vector3(-2, -10, -40)])
-    linesCreate.push([new THREE.Vector3(2, -10, 0), new THREE.Vector3(2, -10, -40)])
-    linesCreate.push([new THREE.Vector3(2, 10, 0), new THREE.Vector3(2, 10, -40)])
-    linesCreate.push([new THREE.Vector3(-2, 10, 0), new THREE.Vector3(-2, 10, -40)])
+    linesCreate.push([new THREE.Vector3(-2, -10, 0), new THREE.Vector3(-2, -10, -52)])
+    linesCreate.push([new THREE.Vector3(2, -10, 0), new THREE.Vector3(2, -10, -52)])
+    linesCreate.push([new THREE.Vector3(2, 10, 0), new THREE.Vector3(2, 10, -52)])
+    linesCreate.push([new THREE.Vector3(-2, 10, 0), new THREE.Vector3(-2, 10, -52)])
 
-    linesCreate.push([new THREE.Vector3(-10, -6, 0), new THREE.Vector3(-10, -6, -40)])
-    linesCreate.push([new THREE.Vector3(10, -6, 0), new THREE.Vector3(10, -6, -40)])
-    linesCreate.push([new THREE.Vector3(10, 6, 0), new THREE.Vector3(10, 6, -40)])
-    linesCreate.push([new THREE.Vector3(-10, 6, 0), new THREE.Vector3(-10, 6, -40)])
+    linesCreate.push([new THREE.Vector3(-10, -6, 0), new THREE.Vector3(-10, -6, -52)])
+    linesCreate.push([new THREE.Vector3(10, -6, 0), new THREE.Vector3(10, -6, -52)])
+    linesCreate.push([new THREE.Vector3(10, 6, 0), new THREE.Vector3(10, 6, -52)])
+    linesCreate.push([new THREE.Vector3(-10, 6, 0), new THREE.Vector3(-10, 6, -52)])
 
-    linesCreate.push([new THREE.Vector3(-10, -2, 0), new THREE.Vector3(-10, -2, -40)])
-    linesCreate.push([new THREE.Vector3(10, -2, 0), new THREE.Vector3(10, -2, -40)])
-    linesCreate.push([new THREE.Vector3(10, 2, 0), new THREE.Vector3(10, 2, -40)])
-    linesCreate.push([new THREE.Vector3(-10, 2, 0), new THREE.Vector3(-10, 2, -40)])
+    linesCreate.push([new THREE.Vector3(-10, -2, 0), new THREE.Vector3(-10, -2, -52)])
+    linesCreate.push([new THREE.Vector3(10, -2, 0), new THREE.Vector3(10, -2, -52)])
+    linesCreate.push([new THREE.Vector3(10, 2, 0), new THREE.Vector3(10, 2, -52)])
+    linesCreate.push([new THREE.Vector3(-10, 2, 0), new THREE.Vector3(-10, 2, -52)])
 
 
-    linesCreate.push([new THREE.Vector3(10, -6, -40), new THREE.Vector3(-10, -6, -40)])
-    linesCreate.push([new THREE.Vector3(10, -2, -40), new THREE.Vector3(-10, -2, -40)])
-    linesCreate.push([new THREE.Vector3(10, 2, -40), new THREE.Vector3(-10, 2, -40)])
-    linesCreate.push([new THREE.Vector3(10, 6, -40), new THREE.Vector3(-10, 6, -40)])
+    linesCreate.push([new THREE.Vector3(10, -6, -52), new THREE.Vector3(-10, -6, -52)])
+    linesCreate.push([new THREE.Vector3(10, -2, -52), new THREE.Vector3(-10, -2, -52)])
+    linesCreate.push([new THREE.Vector3(10, 2, -52), new THREE.Vector3(-10, 2, -52)])
+    linesCreate.push([new THREE.Vector3(10, 6, -52), new THREE.Vector3(-10, 6, -52)])
 
-    linesCreate.push([new THREE.Vector3(-6, 10, -40), new THREE.Vector3(-6, -10, -40)])
-    linesCreate.push([new THREE.Vector3(-2, 10, -40), new THREE.Vector3(-2, -10, -40)])
-    linesCreate.push([new THREE.Vector3(2, 10, -40), new THREE.Vector3(2, -10, -40)])
-    linesCreate.push([new THREE.Vector3(6, 10, -40), new THREE.Vector3(6, -10, -40)])
+    linesCreate.push([new THREE.Vector3(-6, 10, -52), new THREE.Vector3(-6, -10, -52)])
+    linesCreate.push([new THREE.Vector3(-2, 10, -52), new THREE.Vector3(-2, -10, -52)])
+    linesCreate.push([new THREE.Vector3(2, 10, -52), new THREE.Vector3(2, -10, -52)])
+    linesCreate.push([new THREE.Vector3(6, 10, -52), new THREE.Vector3(6, -10, -52)])
     console.log("RANDOM", Math.floor(Math.random() * 4))
     currentPiece = Math.floor(Math.random() * 4)
     setBoxLines(linesCreate)
@@ -533,10 +533,10 @@ export default function App() {
         <Square position={currentPos} color={currentColor} direction={currentDirection} />
         <GameCubes gameState={gameState} />
         {boxLines && boxLines.map((line) => {
-          console.log("linnnes")
-          return <Line points={line} color={"#FF0000"} />
+          console.log("linnnes", line)
+          return <Line points={line} color={"#FF0000"} lineWidth={0.5} />
         })}
-        <BloomEffect/>
+        {/* <BloomEffect/> */}
       </Canvas>
     </div>
   )

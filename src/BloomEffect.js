@@ -9,7 +9,8 @@ import * as THREE from 'three'
 var materials = {};
 const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
 const darkenNonBloomed = (obj) => {
-    if (!obj.isMesh || obj.userData.active)
+    console.log("obj, ", obj)
+    if ( !obj.userData)
         return
     materials[obj.uuid] = obj.material
     obj.material = darkMaterial
@@ -30,7 +31,7 @@ export default function BloomEffect() {
       const comp = new EffectComposer(gl)
       comp.renderToScreen = false
       comp.addPass(renderScene)
-      comp.addPass(new UnrealBloomPass(new THREE.Vector2(512, 512), 1.5, 1, 0))
+      comp.addPass(new UnrealBloomPass(new THREE.Vector2(512, 512), 5, 4, 0))
   
       const finalComposer = new EffectComposer(gl)
       finalComposer.addPass(renderScene)
@@ -38,7 +39,7 @@ export default function BloomEffect() {
         uniforms: { baseTexture: { value: null }, bloomTexture: { value: comp.renderTarget2.texture } },
         vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 ); }',
         fragmentShader:
-          'uniform sampler2D baseTexture; uniform sampler2D bloomTexture; varying vec2 vUv; vec4 getTexture( sampler2D texelToLinearTexture ) { return mapTexelToLinear( texture2D( texelToLinearTexture , vUv ) ); } void main() { gl_FragColor = ( getTexture( baseTexture ) + vec4( 1.0 ) * getTexture( bloomTexture ) ); }'
+          'uniform sampler2D baseTexture; uniform sampler2D bloomTexture; varying vec2 vUv; vec4 getTexture( sampler2D texelToLinearTexture ) { return  texture2D( texelToLinearTexture , vUv ); } void main() { gl_FragColor = ( getTexture( baseTexture ) + vec4( 1.0 ) * getTexture( bloomTexture ) ); }'
       })
       material.map = true
       const finalPass = new ShaderPass(material, 'baseTexture')
